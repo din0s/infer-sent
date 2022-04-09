@@ -9,7 +9,7 @@ import spacy
 
 
 class SNLIDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str = "./data", batch_size: int = 32):
+    def __init__(self, data_dir: str = "./data", batch_size: int = 64):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "snli")
         self.batch_size = batch_size
