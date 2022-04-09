@@ -7,10 +7,11 @@ import os
 import pytorch_lightning as pl
 import spacy
 
-
 class SNLIDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str = "./data", batch_size: int = 64):
+    def __init__(self, w2i: Dict[str, int], data_dir: str = "./data", batch_size: int = 64):
         super().__init__()
+        self.w2i = w2i
+        self.max_len = 402
         self.data_dir = os.path.join(data_dir, "snli")
         self.batch_size = batch_size
 
@@ -21,15 +22,28 @@ class SNLIDataModule(pl.LightningDataModule):
 
         if not os.path.exists(self.data_dir):
             tokenizer = get_tokenizer('spacy', language='en_core_web_sm')
-            def preprocess(sbatched: Dict[str, List[str]]) -> Dict[str, List[str]]:
-                sbatched['premise'] = [tokenizer(p.lower()) for p in sbatched['premise']]
-                sbatched['hypothesis'] = [tokenizer(h.lower()) for h in sbatched['hypothesis']]
-                return sbatched
+            def tokenize_to_ids(sentence: str) -> List[int]:
+                tokens = tokenizer(sentence.lower())
+                ids = [self.w2i[t] if t in self.w2i else -1 for t in tokens]
+                return ids
+
+            pad_id = self.w2i["<pad>"]
+            def pad(ids: List[int]) -> List[int]:
+                return ids + (self.max_len - len(ids)) * [pad_id]
+
+            def concat_padded(ids1: List[int], ids2: List[int]) -> List[int]:
+                return pad(ids1) + pad(ids2)
+
+            def preprocess(sample: Dict[str, List]) -> Dict[str, List]:
+                premise = tokenize_to_ids(sample['premise'])
+                hypothesis = tokenize_to_ids(sample['hypothesis'])
+                return { "sentences": concat_padded(premise, hypothesis), "labels": sample['label'] }
 
             print("Downloading SNLI data from HuggingFace")
             dataset = load_dataset('snli')
-            print("Preprocessing data (lowercasing + tokenization)")
-            dataset = dataset.map(preprocess, batched=True)
+            print("Preprocessing data")
+            dataset = dataset.map(preprocess, remove_columns=["premise", "hypothesis", "label"])
+            dataset.set_format(type="torch")
             print("Saving to disk")
             dataset.save_to_disk(self.data_dir)
 
