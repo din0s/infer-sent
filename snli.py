@@ -19,10 +19,7 @@ class SNLIDataModule(pl.LightningDataModule):
             print("Downloading SpaCy English model (small)")
             spacy.cli.download("en_core_web_sm")
 
-        if os.path.exists(self.data_dir):
-            print("SNLI dataset exists locally, loading from disk")
-            self.dataset = load_from_disk(self.data_dir)
-        else:
+        if not os.path.exists(self.data_dir):
             tokenizer = get_tokenizer('spacy', language='en_core_web_sm')
             def preprocess(sbatched: Dict[str, List[str]]) -> Dict[str, List[str]]:
                 sbatched['premise'] = [tokenizer(p.lower()) for p in sbatched['premise']]
@@ -30,18 +27,19 @@ class SNLIDataModule(pl.LightningDataModule):
                 return sbatched
 
             print("Downloading SNLI data from HuggingFace")
-            self.dataset = load_dataset('snli')
+            dataset = load_dataset('snli')
             print("Preprocessing data (lowercasing + tokenization)")
-            self.dataset = self.dataset.map(preprocess, batched=True)
+            dataset = dataset.map(preprocess, batched=True)
             print("Saving to disk")
-            self.dataset.save_to_disk(self.data_dir)
+            dataset.save_to_disk(self.data_dir)
 
     def setup(self, stage: Optional[str] = None):
+        dataset = load_from_disk(self.data_dir)
         if stage == "fit" or stage is None:
-            self.snli_train = self.dataset['train']
-            self.snli_val = self.dataset['validation']
+            self.snli_train = dataset['train']
+            self.snli_val = dataset['validation']
         if stage == "test" or stage is None:
-            self.snli_test = self.dataset['test']
+            self.snli_test = dataset['test']
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.snli_train, batch_size=self.batch_size, num_workers=4)
