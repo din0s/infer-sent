@@ -43,12 +43,12 @@ class SNLIDataModule(pl.LightningDataModule):
             dataset = load_dataset('snli')
             print("Preprocessing data")
             dataset = dataset.map(preprocess, remove_columns=["premise", "hypothesis", "label"])
-            dataset.set_format(type="torch")
             print("Saving to disk")
             dataset.save_to_disk(self.data_dir)
 
     def setup(self, stage: Optional[str] = None):
         dataset = load_from_disk(self.data_dir)
+        dataset.set_format(type="torch", columns=["sentences", "labels"])
         if stage == "fit" or stage is None:
             self.snli_train = dataset['train']
             self.snli_val = dataset['validation']
