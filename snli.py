@@ -45,10 +45,10 @@ class SNLIDataModule(pl.LightningDataModule):
             self.snli_test = self.dataset['test']
 
     def train_dataloader(self):
-        return DataLoader(self.snli_train, batch_size=self.batch_size)
+        return DataLoader(self.snli_train, batch_size=self.batch_size, num_workers=4)
 
     def val_dataloader(self):
-        return DataLoader(self.snli_val, batch_size=self.batch_size)
+        return DataLoader(self.snli_val, batch_size=self.batch_size, num_workers=4)
 
     def test_dataloader(self):
-        return DataLoader(self.snli_test, batch_size=self.batch_size)
+        return DataLoader(self.snli_test, batch_size=self.batch_size, num_workers=4)
