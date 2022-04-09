@@ -1,7 +1,7 @@
 from datasets import load_dataset, load_from_disk
 from torch.utils.data import DataLoader
 from torchtext.data.utils import get_tokenizer
-from typing import Optional
+from typing import Dict, List, Optional
 
 import os
 import pytorch_lightning as pl
@@ -24,16 +24,15 @@ class SNLIDataModule(pl.LightningDataModule):
             self.dataset = load_from_disk(self.data_dir)
         else:
             tokenizer = get_tokenizer('spacy', language='en_core_web_sm')
-
-            def preprocess(sample):
-                sample['premise'] = tokenizer(sample['premise'].lower())
-                sample['hypothesis'] = tokenizer(sample['hypothesis'].lower())
-                return sample
+            def preprocess(sbatched: Dict[str, List[str]]) -> Dict[str, List[str]]:
+                sbatched['premise'] = [tokenizer(p.lower()) for p in sbatched['premise']]
+                sbatched['hypothesis'] = [tokenizer(h.lower()) for h in sbatched['hypothesis']]
+                return sbatched
 
             print("Downloading SNLI data from HuggingFace")
             self.dataset = load_dataset('snli')
             print("Preprocessing data (lowercasing + tokenization)")
-            self.dataset = self.dataset.map(preprocess)
+            self.dataset = self.dataset.map(preprocess, batched=True)
             print("Saving to disk")
             self.dataset.save_to_disk(self.data_dir)
 
