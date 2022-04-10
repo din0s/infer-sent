@@ -1,6 +1,6 @@
 from torch import Tensor
 from tqdm import tqdm
-from typing import Dict, List
+from typing import List
 
 import os
 import re
