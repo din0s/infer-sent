@@ -20,7 +20,10 @@ class GloVeEmbeddings:
         self.txt_path = os.path.join(self.data_dir, re.sub(r"\.zip$", ".txt", ZIP_NAME))
         self.pt_path = os.path.join(self.data_dir, re.sub(r"\.zip$", ".pt", ZIP_NAME))
 
-        self._download()
+        if os.path.exists(self.txt_path) or os.path.exists(self.pt_path):
+            self._build_vocabulary()
+        else:
+            self._download()
 
     def __getitem__(self, id: int) -> Tensor:
         if id < 0 or id >= len(self.vectors):

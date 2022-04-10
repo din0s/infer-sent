@@ -20,6 +20,9 @@ class SNLIDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
 
     def prepare_data(self):
+        if os.path.exists(self.aligned_dir):
+            return
+
         if not spacy.util.is_package("en_core_web_sm"):
             print("Downloading SpaCy English model (small)")
             spacy.cli.download("en_core_web_sm")
