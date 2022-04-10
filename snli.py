@@ -91,6 +91,7 @@ class SNLIDataModule(pl.LightningDataModule):
         if stage == "fit" or stage is None:
             self.snli_train = dataset['train']
             self.snli_val = dataset['validation']
+            self.num_classes = len(dataset['train']['labels'].unique())
         if stage == "test" or stage is None:
             self.snli_test = dataset['test']
 
