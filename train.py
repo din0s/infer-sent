@@ -24,7 +24,7 @@ def train(args: Namespace):
     model = Classifier(snli.glove.vectors, encoder, n_classes=snli.num_classes, **vars(args))
 
     log = TensorBoardLogger(args.log_dir, name=None, default_hp_metric=False)
-    gpus = 1 if args.use_gpu else 0
+    gpus = 0 if args.no_gpu else 1
     trainer = Trainer.from_argparse_args(args, logger=log, gpus=gpus, callbacks=[LRStopping()])
     trainer.fit(model, snli)
 
@@ -39,8 +39,8 @@ if __name__ == "__main__":
     parser.add_argument("--max_epochs", type=int, default=-1,
                         help="The max amount of epochs to train the classifier.")
 
-    parser.add_argument("--use_gpu", action='store_true', default=True,
-                        help="Whether to use a GPU accelerator for training.")
+    parser.add_argument("--no_gpu", action='store_true',
+                        help="Whether to NOT use a GPU accelerator for training.")
 
     # Model arguments
     Classifier.add_model_specific_args(parser)
