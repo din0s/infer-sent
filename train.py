@@ -44,7 +44,7 @@ if __name__ == "__main__":
     Classifier.add_model_specific_args(parser)
     
     parser.add_argument("--encoder_arch", type=str, default="baseline",
-        choices=["baseline"],  # TODO: imeplement more
+        choices=["baseline"],  # TODO: implement more
         help="The name of the encoder architecture to use.")
     
     parser.add_argument("--batch_size", type=int, default=64,

@@ -12,7 +12,7 @@ import zipfile
 GLOVE_URL = "http://downloads.cs.stanford.edu/nlp/data/glove.840B.300d.zip"
 ZIP_NAME = GLOVE_URL.split("/")[-1]
 
-class GloVeEmbeddings():
+class GloVeEmbeddings:
     def __init__(self, data_dir: str = "./data/"):
         self.data_dir = os.path.join(data_dir, "glove")
         self.zip_path = os.path.join(self.data_dir, ZIP_NAME)
