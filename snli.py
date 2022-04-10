@@ -13,8 +13,9 @@ class SNLIDataModule(pl.LightningDataModule):
     def __init__(self, data_dir: str = "./data", batch_size: int = 64):
         super().__init__()
         self.max_len = 402
-        self.data_dir = os.path.join(data_dir, "snli")
-        self.aligned_dir = self.data_dir + "_aligned"
+        self.data_dir = data_dir
+        self.dataset_dir = os.path.join(data_dir, "snli")
+        self.aligned_dir = self.dataset_dir + "_aligned"
         self.batch_size = batch_size
 
     def prepare_data(self):
@@ -22,7 +23,7 @@ class SNLIDataModule(pl.LightningDataModule):
             print("Downloading SpaCy English model (small)")
             spacy.cli.download("en_core_web_sm")
 
-        if not os.path.exists(self.data_dir):
+        if not os.path.exists(self.dataset_dir):
             tokenizer = get_tokenizer('spacy', language='en_core_web_sm')
             def tokenize(sample_batch: Dict[str, List]) -> Dict[str, List]:
                 for field in ('premise', 'hypothesis'):
@@ -34,14 +35,14 @@ class SNLIDataModule(pl.LightningDataModule):
             print("Preprocessing data (lowercase + tokenize)")
             dataset = dataset.map(tokenize, batched=True)
             print("Saving to disk")
-            dataset.save_to_disk(self.data_dir)
+            dataset.save_to_disk(self.dataset_dir)
 
     def setup(self, stage: Optional[str] = None):
         if os.path.exists(self.aligned_dir):
             dataset = load_from_disk(self.aligned_dir)
-            glove = GloVeEmbeddings()
+            glove = GloVeEmbeddings(self.data_dir)
         else:
-            dataset = load_from_disk(self.data_dir)
+            dataset = load_from_disk(self.dataset_dir)
 
             def collect_words(sample_batch: Dict[str, List]) -> Dict[str, List]:
                 words = []
@@ -55,7 +56,7 @@ class SNLIDataModule(pl.LightningDataModule):
             vocab = ["<pad>", "<unk>"] + list(set(vocab['words']))
 
             print("Aligning GloVe embeddings with train vocabulary")
-            glove = GloVeEmbeddings()
+            glove = GloVeEmbeddings(self.data_dir)
             glove.update(vocab)
             
             def to_ids(sample_batch: Dict[str, List]) -> Dict[str, List]:
