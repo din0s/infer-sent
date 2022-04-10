@@ -97,7 +97,7 @@ class SNLIDataModule(pl.LightningDataModule):
         self.glove = glove
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.snli_train, batch_size=self.batch_size, num_workers=4)
+        return DataLoader(self.snli_train, batch_size=self.batch_size, num_workers=4, shuffle=True, drop_last=True)
 
     def val_dataloader(self) -> DataLoader:
         return DataLoader(self.snli_val, batch_size=self.batch_size, num_workers=4)
