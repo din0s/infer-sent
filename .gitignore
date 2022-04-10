@@ -130,3 +130,6 @@ dmypy.json
 
 # Data directory
 data/
+
+# PL Logs directory
+lightning_logs/
