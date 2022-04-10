@@ -133,3 +133,4 @@ data/
 
 # PL Logs directory
 lightning_logs/
+lisa_logs/
