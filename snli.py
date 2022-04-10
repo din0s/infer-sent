@@ -14,6 +14,7 @@ class SNLIDataModule(pl.LightningDataModule):
         super().__init__()
         self.max_len = 402
         self.data_dir = data_dir
+        self.cache_dir = os.path.join(data_dir, "hf_cache")
         self.dataset_dir = os.path.join(data_dir, "snli")
         self.aligned_dir = self.dataset_dir + "_aligned"
         self.batch_size = batch_size
@@ -32,7 +33,7 @@ class SNLIDataModule(pl.LightningDataModule):
                 return sample_batch
 
             print("Downloading SNLI data from HuggingFace")
-            dataset = load_dataset('snli')
+            dataset = load_dataset('snli', cache_dir=self.cache_dir)
             print("Preprocessing data (lowercase + tokenize)")
             dataset = dataset.map(tokenize, batched=True)
             print("Saving to disk")
