@@ -28,11 +28,11 @@ class GloVeEmbeddings:
 
         return self.vectors[id]
 
-    def get(self, token: str) -> Tensor:
+    def get_id(self, token: str) -> Tensor:
         if token not in self.w2i:
             token = "<unk>"
 
-        return self.vectors[self.w2i[token]]
+        return self.w2i[token]
 
     def update(self, vocab: List[str], update_disk: bool = True):
         indices = sorted([self.w2i[w] for w in vocab if w in self.w2i])

@@ -63,7 +63,7 @@ class SNLIDataModule(pl.LightningDataModule):
 
             def to_ids(sample_batch: Dict[str, List]) -> Dict[str, List]:
                 def tokens_to_ids(tokens: List[str]) -> List[int]:
-                    return [glove.get(token) for token in tokens]
+                    return [glove.get_id(token) for token in tokens]
 
                 for field in ('premise', 'hypothesis'):
                     sample_batch[field] = [tokens_to_ids(t) for t in sample_batch[field]]
