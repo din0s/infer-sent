@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.log_dir):
-        os.mkdir(args.log_dir)
+    os.makedirs(args.data_dir, exist_ok=True)
+    os.makedirs(args.log_dir, exist_ok=True)
 
     train(args)
