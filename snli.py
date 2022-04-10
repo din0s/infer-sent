@@ -25,11 +25,12 @@ class SNLIDataModule(pl.LightningDataModule):
 
         if not os.path.exists(self.dataset_dir):
             tokenizer = get_tokenizer('spacy', language='en_core_web_sm')
+
             def tokenize(sample_batch: Dict[str, List]) -> Dict[str, List]:
                 for field in ('premise', 'hypothesis'):
                     sample_batch[field] = [tokenizer(f.lower()) for f in sample_batch[field]]
                 return sample_batch
-            
+
             print("Downloading SNLI data from HuggingFace")
             dataset = load_dataset('snli')
             print("Preprocessing data (lowercase + tokenize)")
@@ -49,7 +50,7 @@ class SNLIDataModule(pl.LightningDataModule):
                 for field in ('premise', 'hypothesis'):
                     for sentence in sample_batch[field]:
                         words += sentence
-                return { "words": words }
+                return {"words": words}
 
             print("Collecting train vocabulary")
             vocab = dataset['train'].map(collect_words, batched=True, remove_columns=dataset['train'].column_names)
@@ -58,19 +59,20 @@ class SNLIDataModule(pl.LightningDataModule):
             print("Aligning GloVe embeddings with train vocabulary")
             glove = GloVeEmbeddings(self.data_dir)
             glove.update(vocab)
-            
+
             def to_ids(sample_batch: Dict[str, List]) -> Dict[str, List]:
                 def tokens_to_ids(tokens: List[str]) -> List[int]:
                     return [glove.get(token) for token in tokens]
-                
+
                 for field in ('premise', 'hypothesis'):
                     sample_batch[field] = [tokens_to_ids(t) for t in sample_batch[field]]
                 return sample_batch
-        
+
             print("Converting tokens to ids")
             dataset = dataset.map(to_ids, batched=True)
 
             pad_id = glove.w2i["<pad>"]
+
             def pad(ids: List[int]) -> List[int]:
                 return ids + (self.max_len - len(ids)) * [pad_id]
 
@@ -78,7 +80,7 @@ class SNLIDataModule(pl.LightningDataModule):
                 ids1 = sample['premise']
                 ids2 = sample['hypothesis']
                 sentence = pad(ids1) + pad(ids2)
-                return { "sentences": sentence, "labels": sample["label"] }
+                return {"sentences": sentence, "labels": sample["label"]}
 
             print("Concatenating sentences & padding")
             dataset = dataset.map(concat_padded, remove_columns=["label", "premise", "hypothesis"])

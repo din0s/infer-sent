@@ -18,21 +18,21 @@ class Classifier(LightningModule):
         parser = parent_parser.add_argument_group("Classifier")
 
         parser.add_argument("--classifier_hidden_dim", type=int, default=512,
-            help="The dimensionality of the hidden layer in the MLP classifier.")
+                            help="The dimensionality of the hidden layer in the MLP classifier.")
 
         parser.add_argument("--lr", type=float, default=0.1,
-            help="The initial learning rate for the classifier.")
+                            help="The initial learning rate for the classifier.")
 
         return parent_parser
 
     def __init__(
-        self,
-        embeddings: Tensor,
-        encoder: Module,
-        n_classes: int,
-        classifier_hidden_dim: int,
-        lr: float,
-        **kwargs):
+            self,
+            embeddings: Tensor,
+            encoder: Module,
+            n_classes: int,
+            classifier_hidden_dim: int,
+            lr: float,
+            **kwargs):
         super().__init__()
         self.save_hyperparameters("classifier_hidden_dim", "lr", ignore=["encoder"])
 
@@ -47,7 +47,7 @@ class Classifier(LightningModule):
             Linear(self.hparams.classifier_hidden_dim, self.hparams.classifier_hidden_dim),
             Linear(self.hparams.classifier_hidden_dim, n_classes)
         )
-    
+
     def forward(self, sentences: Tensor) -> Tensor:
         u, v = torch.chunk(sentences, 2, dim=1)
         u = self.encoder(self.embed(u))
@@ -56,17 +56,17 @@ class Classifier(LightningModule):
         z = torch.cat([u, v, torch.abs(u - v), u * v], dim=1)
         z = self.classifier(z)
         return z
-    
+
     def step(self, batch: Dict[str, Tensor], stage: str) -> Tensor:
         sentences, labels = batch['sentences'], batch['labels']
-        
+
         logits = self(sentences)
         loss = F.cross_entropy(logits, labels)
         acc = TF.accuracy(logits, labels)
 
         self.log(f'{stage}_acc', acc)
         self.log(f'{stage}_loss', loss)
-        
+
         return loss
 
     def training_step(self, batch: Dict[str, Tensor], _: Tensor) -> Tensor:
