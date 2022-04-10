@@ -18,6 +18,7 @@ class SNLIDataModule(pl.LightningDataModule):
         self.dataset_dir = os.path.join(data_dir, "snli")
         self.aligned_dir = self.dataset_dir + "_aligned"
         self.batch_size = batch_size
+        self.workers = os.cpu_count()
 
     def prepare_data(self):
         if os.path.exists(self.aligned_dir):
@@ -105,10 +106,10 @@ class SNLIDataModule(pl.LightningDataModule):
         self.glove = glove
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.snli_train, batch_size=self.batch_size, num_workers=4, shuffle=True, drop_last=True)
+        return DataLoader(self.snli_train, batch_size=self.batch_size, num_workers=self.workers, shuffle=True, drop_last=True)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.snli_val, batch_size=self.batch_size, num_workers=4)
+        return DataLoader(self.snli_val, batch_size=self.batch_size, num_workers=self.workers)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.snli_test, batch_size=self.batch_size, num_workers=4)
+        return DataLoader(self.snli_test, batch_size=self.batch_size, num_workers=self.workers)
