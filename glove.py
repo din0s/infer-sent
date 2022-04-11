@@ -31,7 +31,7 @@ class GloVeEmbeddings:
 
         return self.vectors[id]
 
-    def get_id(self, token: str) -> Tensor:
+    def get_id(self, token: str) -> int:
         if token not in self.w2i:
             token = "<unk>"
 
