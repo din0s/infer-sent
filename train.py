@@ -27,7 +27,7 @@ def train(args: Namespace):
 
     model = Classifier(snli.glove.vectors, encoder, repr_dim, n_classes=snli.num_classes, **vars(args))
 
-    log = TensorBoardLogger(args.log_dir, name=None, default_hp_metric=False)
+    log = TensorBoardLogger(args.log_dir, name=args.encoder_arch, default_hp_metric=False)
     gpus = 0 if args.no_gpu else 1
     trainer = Trainer.from_argparse_args(args, logger=log, gpus=gpus, callbacks=[LRStopping()])
     trainer.fit(model, snli)
