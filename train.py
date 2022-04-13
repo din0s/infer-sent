@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from classifier import Classifier
-from encoders import BaselineEncoder
+from encoders import BaselineEncoder, LSTMEncoder
 from lr_stopping import LRStopping
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -17,8 +17,11 @@ def train(args: Namespace):
     snli.setup(stage="fit")
 
     if args.encoder_arch == "baseline":
-        repr_dim = 300
+        repr_dim = snli.embed_dim
         encoder = BaselineEncoder()
+    elif args.encoder_arch == "lstm":
+        repr_dim = 2048
+        encoder = LSTMEncoder(snli.embed_dim, repr_dim)
     else:
         raise Exception(f"Unsupported encoder architecture '{args.encoder_arch}'")
 
@@ -50,7 +53,7 @@ if __name__ == "__main__":
     Classifier.add_model_specific_args(parser)
 
     parser.add_argument("--encoder_arch", type=str, default="baseline",
-                        choices=["baseline"],  # TODO: implement more
+                        choices=["baseline", "lstm"],  # TODO: implement more
                         help="The name of the encoder architecture to use.")
 
     parser.add_argument("--batch_size", type=int, default=64,

@@ -101,6 +101,7 @@ class SNLIDataModule(pl.LightningDataModule):
 
         # expose glove
         self.glove = glove
+        self.embed_dim = glove.vectors.shape[1]
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.snli_train,
