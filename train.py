@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from classifier import Classifier
-from encoders.baseline import BaselineEncoder
+from encoders import BaselineEncoder
 from lr_stopping import LRStopping
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -17,11 +17,12 @@ def train(args: Namespace):
     snli.setup(stage="fit")
 
     if args.encoder_arch == "baseline":
+        repr_dim = 300
         encoder = BaselineEncoder()
     else:
         raise Exception(f"Unsupported encoder architecture '{args.encoder_arch}'")
 
-    model = Classifier(snli.glove.vectors, encoder, n_classes=snli.num_classes, **vars(args))
+    model = Classifier(snli.glove.vectors, encoder, repr_dim, n_classes=snli.num_classes, **vars(args))
 
     log = TensorBoardLogger(args.log_dir, name=None, default_hp_metric=False)
     gpus = 0 if args.no_gpu else 1

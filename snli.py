@@ -1,18 +1,20 @@
 from datasets import load_dataset, load_from_disk
 from glove import GloVeEmbeddings
+from torch import Tensor
 from torch.utils.data import DataLoader
+from torch.nn.utils.rnn import pad_sequence
 from torchtext.data.utils import get_tokenizer
-from typing import Dict, List, Optional
+from typing import Dict, List, Tuple, Optional
 
 import os
 import pytorch_lightning as pl
 import spacy
+import torch
 
 
 class SNLIDataModule(pl.LightningDataModule):
     def __init__(self, data_dir: str = "./data", batch_size: int = 64):
         super().__init__()
-        self.max_len = 402
         self.data_dir = data_dir
         self.cache_dir = os.path.join(data_dir, "hf_cache")
         self.dataset_dir = os.path.join(data_dir, "snli")
@@ -76,29 +78,24 @@ class SNLIDataModule(pl.LightningDataModule):
             print("Converting tokens to ids")
             dataset = dataset.map(to_ids, batched=True)
 
-            pad_id = glove.w2i["<pad>"]
-
-            def pad(ids: List[int]) -> List[int]:
-                return ids + (self.max_len - len(ids)) * [pad_id]
-
-            def concat_padded(sample: Dict[str, List]) -> Dict[str, List]:
-                ids1 = sample['premise']
-                ids2 = sample['hypothesis']
-                sentence = pad(ids1) + pad(ids2)
-                return {"sentences": sentence, "labels": sample["label"]}
-
-            print("Concatenating sentences & padding")
-            dataset = dataset.map(concat_padded, remove_columns=["label", "premise", "hypothesis"])
+            # def concat(sample: Dict[str, List]) -> Dict[str, List]:
+            #     ids1 = sample['premise']
+            #     ids2 = sample['hypothesis']
+            #     sentence = ids1 + [-1] + ids2  # -1 acts as the chunking id
+            #     return {"sentences": sentence, "labels": sample["label"]}
+            #
+            # print("Concatenating sentences")
+            # dataset = dataset.map(concat, remove_columns=["label", "premise", "hypothesis"])
 
             print("Saving aligned dataset to disk")
             dataset.save_to_disk(self.aligned_dir)
 
-        dataset = dataset.filter(lambda e: e['labels'] >= 0)
-        dataset.set_format(type="torch", columns=["sentences", "labels"])
+        dataset = dataset.filter(lambda e: e['label'] >= 0)
+        dataset.set_format(type="torch", columns=["premise", "hypothesis", "label"])
         if stage == "fit" or stage is None:
             self.snli_train = dataset['train']
             self.snli_val = dataset['validation']
-            self.num_classes = len(dataset['train']['labels'].unique())
+            self.num_classes = len(torch.unique(self.snli_train['label']))
         if stage == "test" or stage is None:
             self.snli_test = dataset['test']
 
@@ -106,10 +103,36 @@ class SNLIDataModule(pl.LightningDataModule):
         self.glove = glove
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.snli_train, batch_size=self.batch_size, num_workers=self.workers, shuffle=True, drop_last=True)
+        return DataLoader(self.snli_train,
+                          batch_size=self.batch_size,
+                          num_workers=self.workers,
+                          shuffle=True, drop_last=True,
+                          collate_fn=self._collate_fn
+                          )
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.snli_val, batch_size=self.batch_size, num_workers=self.workers)
+        return DataLoader(self.snli_val,
+                          batch_size=self.batch_size,
+                          num_workers=self.workers,
+                          collate_fn=self._collate_fn
+                          )
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.snli_test, batch_size=self.batch_size, num_workers=self.workers)
+        return DataLoader(self.snli_test,
+                          batch_size=self.batch_size,
+                          num_workers=self.workers,
+                          collate_fn=self._collate_fn
+                          )
+
+    def _collate_fn(self, batch: List[Dict[str, Tensor]]) -> Tuple[Tuple, Tuple, Tensor]:
+        premises = [x['premise'] for x in batch]
+        hypotheses = [x['hypothesis'] for x in batch]
+        labels = torch.LongTensor([x['label'] for x in batch])
+
+        p_padded = pad_sequence(premises, batch_first=True)
+        h_padded = pad_sequence(hypotheses, batch_first=True)
+
+        p_lengths = torch.LongTensor([len(x) for x in premises])
+        h_lengths = torch.LongTensor([len(x) for x in hypotheses])
+
+        return (p_padded, p_lengths), (h_padded, h_lengths), labels

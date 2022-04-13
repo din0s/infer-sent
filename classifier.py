@@ -1,11 +1,11 @@
 from argparse import ArgumentParser
-from encoders import BaselineEncoder
+# from encoders import BaselineEncoder
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import Embedding, Linear, Module, Sequential
 from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau, StepLR
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -29,6 +29,7 @@ class Classifier(LightningModule):
             self,
             embeddings: Tensor,
             encoder: Module,
+            repr_dim: int,
             n_classes: int,
             classifier_hidden_dim: int,
             lr: float,
@@ -39,28 +40,33 @@ class Classifier(LightningModule):
         self.embed = Embedding.from_pretrained(embeddings, freeze=True)
         self.encoder = encoder
 
-        if isinstance(encoder, BaselineEncoder):
-            rep_dim = 300
-
         self.classifier = Sequential(
-            Linear(4 * rep_dim, self.hparams.classifier_hidden_dim),
+            Linear(4 * repr_dim, self.hparams.classifier_hidden_dim),
             Linear(self.hparams.classifier_hidden_dim, self.hparams.classifier_hidden_dim),
             Linear(self.hparams.classifier_hidden_dim, n_classes)
         )
 
-    def forward(self, sentences: Tensor) -> Tensor:
-        u, v = torch.chunk(sentences, 2, dim=1)
-        u = self.encoder(self.embed(u))
-        v = self.encoder(self.embed(v))
+    def forward(self, p: Tensor, h: Tensor, p_len: Tensor, h_len: Tensor) -> Tensor:
+        # Embed
+        p = self.embed(p)
+        h = self.embed(h)
 
-        z = torch.cat([u, v, torch.abs(u - v), u * v], dim=1)
+        # Encode
+        p = self.encoder(p)
+        h = self.encoder(h)
+
+        # Concat representations
+        z = torch.cat([p, h, torch.abs(p - h), p * h], dim=1)
+
+        # Classify
         z = self.classifier(z)
+
         return z
 
-    def step(self, batch: Dict[str, Tensor], stage: str) -> Tensor:
-        sentences, labels = batch['sentences'], batch['labels']
+    def step(self, batch: Tuple[Tuple, Tuple, Tensor], stage: str) -> Tensor:
+        (p, p_len), (h, h_len), labels = batch
 
-        logits = self(sentences)
+        logits = self(p, h, p_len, h_len)
         loss = F.cross_entropy(logits, labels)
         acc = TF.accuracy(logits, labels)
 
@@ -69,13 +75,13 @@ class Classifier(LightningModule):
 
         return loss
 
-    def training_step(self, batch: Dict[str, Tensor], _: Tensor) -> Tensor:
+    def training_step(self, batch: Tuple[Tuple, Tuple, Tensor], _: Tensor) -> Tensor:
         return self.step(batch, 'train')
 
-    def validation_step(self, batch: Dict[str, Tensor], _: Tensor) -> Tensor:
+    def validation_step(self, batch: Tuple[Tuple, Tuple, Tensor], _: Tensor) -> Tensor:
         return self.step(batch, 'val')
 
-    def test_step(self, batch: Dict[str, Tensor], _: Tensor) -> Tensor:
+    def test_step(self, batch: Tuple[Tuple, Tuple, Tensor], _: Tensor) -> Tensor:
         return self.step(batch, 'test')
 
     def configure_optimizers(self) -> Tuple[List[Optimizer], List[_LRScheduler]]:
