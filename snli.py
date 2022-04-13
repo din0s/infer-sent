@@ -13,14 +13,14 @@ import torch
 
 
 class SNLIDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str = "./data", batch_size: int = 64):
+    def __init__(self, data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4):
         super().__init__()
         self.data_dir = data_dir
         self.cache_dir = os.path.join(data_dir, "hf_cache")
         self.dataset_dir = os.path.join(data_dir, "snli")
         self.aligned_dir = self.dataset_dir + "_aligned"
         self.batch_size = batch_size
-        self.workers = os.cpu_count()
+        self.workers = num_workers
 
     def prepare_data(self):
         if os.path.exists(self.aligned_dir):

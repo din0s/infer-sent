@@ -59,6 +59,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=64,
                         help="The batch size used by the dataloaders.")
 
+    parser.add_argument("--num_workers", type=int, default=3,
+                        help="The number of subprocesses used by the dataloaders.")
+
     # Directory arguments
     parser.add_argument("--data_dir", type=str, default="./data",
                         help="The data directory to use for embeddings & datasets.")
