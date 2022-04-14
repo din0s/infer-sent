@@ -20,10 +20,10 @@ class GloVeEmbeddings:
         self.txt_path = os.path.join(self.data_dir, re.sub(r"\.zip$", ".txt", ZIP_NAME))
         self.pt_path = os.path.join(self.data_dir, re.sub(r"\.zip$", ".pt", ZIP_NAME))
 
-        if os.path.exists(self.txt_path) or os.path.exists(self.pt_path):
-            self._build_vocabulary()
-        else:
-            self._download()
+        if not (os.path.exists(self.txt_path) or os.path.exists(self.pt_path)):
+            self._check_zip_exists()
+
+        self._build_vocabulary()
 
     def __getitem__(self, id: int) -> Tensor:
         if id < 0 or id >= len(self.vectors):
@@ -52,40 +52,18 @@ class GloVeEmbeddings:
 
             torch.save((self.i2w, self.w2i, self.vectors, self.dim), self.pt_path)
 
-    def _download(self):
-        # download file using requests + tqdm
-        # https://gist.github.com/wy193777/0e2a4932e81afc6aa4c8f7a2984f34e2
+    def _check_zip_exists(self):
         file_size = int(requests.head(GLOVE_URL).headers["Content-Length"])
 
         if os.path.exists(self.zip_path):
             first_byte = os.path.getsize(self.zip_path)
 
             if first_byte >= file_size:
-                self._build_vocabulary()
                 return
-        else:
-            first_byte = 0
-            os.makedirs(self.data_dir, exist_ok=True)
 
-        print(f"Downloading pre-trained GloVe embeddings from {GLOVE_URL}")
-        range_header = {"Range": "bytes=%s-%s" % (first_byte, file_size)}
-        req = requests.get(GLOVE_URL, headers=range_header, stream=True)
-
-        chunk_size = 1024
-        pbar = tqdm(
-            desc=ZIP_NAME, total=file_size, initial=first_byte,
-            unit='B', unit_scale=True, unit_divisor=chunk_size
-        )
-
-        zipf = open(self.zip_path, 'ab')
-        for chunk in req.iter_content(chunk_size):
-            if chunk:
-                zipf.write(chunk)
-                pbar.update(chunk_size)
-
-        pbar.close()
-        zipf.close()
-        self._build_vocabulary()
+        os.makedirs(self.data_dir, exist_ok=True)
+        print("Please download the GloVe embeddings first by running 'sh scripts/glove.sh'.")
+        exit(1)
 
     def _build_vocabulary(self):
         if os.path.exists(self.pt_path):
