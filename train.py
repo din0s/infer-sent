@@ -70,7 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=420,
                         help="The seed to use for the RNG.")
 
-    parser.add_argument("--max_epochs", type=int, default=-1,
+    parser.add_argument("--max_epochs", type=int, default=20,
                         help="The max amount of epochs to train the classifier.")
 
     parser.add_argument("--enable_progress_bar", action='store_true',
