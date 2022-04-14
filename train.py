@@ -3,6 +3,7 @@ from classifier import Classifier
 from encoders import BaselineEncoder, BiLSTMEncoder, LSTMEncoder, MaxBiLSTMEncoder
 from lr_stopping import LRStopping
 from pytorch_lightning import seed_everything, Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from snli import SNLIDataModule
 
@@ -33,9 +34,10 @@ def train(args: Namespace):
         else:
             raise Exception(f"Unsupported encoder architecture '{args.encoder_arch}'")
 
+    ckpt_cb = ModelCheckpoint(monitor="val_acc", save_top_k=1, mode="max")
     log = TensorBoardLogger(args.log_dir, name=args.encoder_arch, default_hp_metric=False)
     gpus = 0 if args.no_gpu else 1
-    trainer = Trainer.from_argparse_args(args, logger=log, gpus=gpus, callbacks=[LRStopping()])
+    trainer = Trainer.from_argparse_args(args, logger=log, gpus=gpus, callbacks=[LRStopping(), ckpt_cb])
 
     model_args = {"embeddings": snli.glove.vectors, "encoder": encoder}
 
