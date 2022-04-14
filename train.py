@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from classifier import Classifier
-from encoders import BaselineEncoder, LSTMEncoder
+from encoders import BaselineEncoder, BiLSTMEncoder, LSTMEncoder, MaxBiLSTMEncoder
 from lr_stopping import LRStopping
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -19,11 +19,19 @@ def train(args: Namespace):
     if args.encoder_arch == "baseline":
         repr_dim = snli.embed_dim
         encoder = BaselineEncoder()
-    elif args.encoder_arch == "lstm":
-        repr_dim = 2048
-        encoder = LSTMEncoder(snli.embed_dim, repr_dim)
     else:
-        raise Exception(f"Unsupported encoder architecture '{args.encoder_arch}'")
+        repr_dim = 2048
+
+        if args.encoder_arch == "lstm":
+            encoder = LSTMEncoder(snli.embed_dim, args.lstm_state_dim)
+        elif args.encoder_arch == "bilstm":
+            repr_dim *= 2
+            encoder = BiLSTMEncoder(snli.embed_dim, args.lstm_state_dim)
+        elif args.encoder_arch == "bilstm-max":
+            repr_dim *= 2
+            encoder = MaxBiLSTMEncoder(snli.embed_dim, args.lstm_state_dim)
+        else:
+            raise Exception(f"Unsupported encoder architecture '{args.encoder_arch}'")
 
     log = TensorBoardLogger(args.log_dir, name=args.encoder_arch, default_hp_metric=False)
     gpus = 0 if args.no_gpu else 1
@@ -78,8 +86,11 @@ if __name__ == "__main__":
     Classifier.add_model_specific_args(parser)
 
     parser.add_argument("--encoder_arch", type=str, default="baseline",
-                        choices=["baseline", "lstm"],  # TODO: implement more
+                        choices=["baseline", "lstm", "bilstm", "bilstm-max"],
                         help="The name of the encoder architecture to use.")
+
+    parser.add_argument("--lstm_state_dim", type=int, default=2048,
+                        help="The dimensionality of the hidden state in each LSTM cell.")
 
     parser.add_argument("--batch_size", type=int, default=64,
                         help="The batch size used by the dataloaders.")

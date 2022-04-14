@@ -1,9 +1,7 @@
 from argparse import ArgumentParser
-from encoders import LSTMEncoder
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import Embedding, Linear, Module, Sequential
-from torch.nn.utils.rnn import pack_padded_sequence
 from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau, StepLR
 from typing import List, Tuple
@@ -38,8 +36,6 @@ class Classifier(LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["encoder"])
 
-        self.should_pack = isinstance(encoder, LSTMEncoder)
-
         self.embed = Embedding.from_pretrained(embeddings, freeze=True)
         self.encoder = encoder
 
@@ -54,14 +50,9 @@ class Classifier(LightningModule):
         p = self.embed(p)
         h = self.embed(h)
 
-        if self.should_pack:
-            # Pack for LSTM
-            p = pack_padded_sequence(p, p_len.cpu(), batch_first=True, enforce_sorted=False)
-            h = pack_padded_sequence(h, h_len.cpu(), batch_first=True, enforce_sorted=False)
-
         # Encode
-        p = self.encoder(p)
-        h = self.encoder(h)
+        p = self.encoder(p, p_len)
+        h = self.encoder(h, h_len)
 
         # Concat representations
         z = torch.cat([p, h, torch.abs(p - h), p * h], dim=1)
