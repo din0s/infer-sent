@@ -25,11 +25,33 @@ def train(args: Namespace):
     else:
         raise Exception(f"Unsupported encoder architecture '{args.encoder_arch}'")
 
-    model = Classifier(snli.glove.vectors, encoder, repr_dim, n_classes=snli.num_classes, **vars(args))
-
     log = TensorBoardLogger(args.log_dir, name=args.encoder_arch, default_hp_metric=False)
     gpus = 0 if args.no_gpu else 1
     trainer = Trainer.from_argparse_args(args, logger=log, gpus=gpus, callbacks=[LRStopping()])
+
+    model_args = {"embeddings": snli.glove.vectors, "encoder": encoder}
+
+    if args.checkpoint:
+        print(f"Loading from checkpoint: {args.checkpoint}")
+        try:
+            model = Classifier.load_from_checkpoint(args.checkpoint, **model_args)
+        except TypeError:
+            # old checkpoints missing repr_dim and n_classes in saved hparams
+            model_args = {
+                **model_args,
+                "repr_dim": repr_dim,
+                "n_classes": snli.num_classes
+            }
+            model = Classifier.load_from_checkpoint(args.checkpoint, **model_args)
+    else:
+        model_args = {
+            **model_args,
+            "repr_dim": repr_dim,
+            "n_classes": snli.num_classes,
+            **vars(args)
+        }
+        model = Classifier(**model_args)
+
     trainer.fit(model, snli)
 
 
@@ -48,6 +70,9 @@ if __name__ == "__main__":
 
     parser.add_argument("--no_gpu", action='store_true',
                         help="Whether to NOT use a GPU accelerator for training.")
+
+    parser.add_argument("--checkpoint", type=str,
+                        help="The checkpoint from which to load a model.")
 
     # Model arguments
     Classifier.add_model_specific_args(parser)

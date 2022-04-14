@@ -36,7 +36,7 @@ class Classifier(LightningModule):
             lr: float,
             **kwargs):
         super().__init__()
-        self.save_hyperparameters("classifier_hidden_dim", "lr", ignore=["encoder"])
+        self.save_hyperparameters(ignore=["encoder"])
 
         self.should_pack = isinstance(encoder, LSTMEncoder)
 
