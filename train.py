@@ -12,7 +12,7 @@ import os
 def train(args: Namespace):
     seed_everything(args.seed, workers=True)
 
-    snli = SNLIDataModule(args.data_dir, args.batch_size, args.num_workers)
+    snli = SNLIDataModule(args.data_dir, args.batch_size, args.num_workers, args.enable_progress_bar)
     snli.prepare_data()
     snli.setup(stage="fit")
 

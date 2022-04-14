@@ -14,11 +14,12 @@ ZIP_NAME = GLOVE_URL.split("/")[-1]
 
 
 class GloVeEmbeddings:
-    def __init__(self, data_dir: str = "./data/"):
+    def __init__(self, data_dir: str = "./data/", pbar: bool = True):
         self.data_dir = os.path.join(data_dir, "glove")
         self.zip_path = os.path.join(self.data_dir, ZIP_NAME)
         self.txt_path = os.path.join(self.data_dir, re.sub(r"\.zip$", ".txt", ZIP_NAME))
         self.pt_path = os.path.join(self.data_dir, re.sub(r"\.zip$", ".pt", ZIP_NAME))
+        self.pbar = pbar
 
         if not (os.path.exists(self.txt_path) or os.path.exists(self.pt_path)):
             self._check_zip_exists()
@@ -93,7 +94,7 @@ class GloVeEmbeddings:
             vectors = torch.zeros((voc_len + 2, embed_dim))
             v_loaded = 2
 
-            for wline in tqdm(txtf, total=voc_len):
+            for wline in tqdm(txtf, total=voc_len, disable=(not self.pbar)):
                 wline = wline.rstrip().split(" ")
                 word, vec = wline[0], wline[1:]
                 vocab += [word]

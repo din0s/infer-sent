@@ -13,7 +13,7 @@ import torch
 
 
 class SNLIDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4):
+    def __init__(self, data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4, pbar: bool = True):
         super().__init__()
         self.data_dir = data_dir
         self.cache_dir = os.path.join(data_dir, "hf_cache")
@@ -21,6 +21,7 @@ class SNLIDataModule(pl.LightningDataModule):
         self.aligned_dir = self.dataset_dir + "_aligned"
         self.batch_size = batch_size
         self.workers = num_workers
+        self.pbar = pbar
 
     def prepare_data(self):
         if os.path.exists(self.aligned_dir):
@@ -48,7 +49,7 @@ class SNLIDataModule(pl.LightningDataModule):
     def setup(self, stage: Optional[str] = None):
         if os.path.exists(self.aligned_dir):
             dataset = load_from_disk(self.aligned_dir)
-            glove = GloVeEmbeddings(self.data_dir)
+            glove = GloVeEmbeddings(self.data_dir, self.pbar)
         else:
             dataset = load_from_disk(self.dataset_dir)
 
@@ -64,7 +65,7 @@ class SNLIDataModule(pl.LightningDataModule):
             vocab = ["<pad>", "<unk>"] + list(set(vocab['words']))
 
             print("Aligning GloVe embeddings with train vocabulary")
-            glove = GloVeEmbeddings(self.data_dir)
+            glove = GloVeEmbeddings(self.data_dir, self.pbar)
             glove.update(vocab)
 
             def to_ids(sample_batch: Dict[str, List]) -> Dict[str, List]:
