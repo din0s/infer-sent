@@ -21,7 +21,7 @@ def train(args: Namespace):
         repr_dim = snli.embed_dim
         encoder = BaselineEncoder()
     else:
-        repr_dim = 2048
+        repr_dim = args.lstm_state_dim
 
         if args.encoder_arch == "lstm":
             encoder = LSTMEncoder(snli.embed_dim, args.lstm_state_dim)
