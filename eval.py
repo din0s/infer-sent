@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from classifier import Classifier
+from copy import deepcopy
 from encoders import BaselineEncoder, BiLSTMEncoder, LSTMEncoder, MaxBiLSTMEncoder
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -60,6 +61,13 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
     else:
         tasks = ["MR", "CR", "SUBJ", "MPQA", "SST2", "TREC", "MRPC", "SICKRelatedness", "SICKEntailment", "STS14"]
     results = se.eval(tasks)
+
+    results_cp = deepcopy(results)
+    for task, task_results in results.items():
+        for k, v in task_results.items():
+            if isinstance(v, np.ndarray):
+                del results_cp[task][k]
+    results = results_cp
 
     fname = os.path.join(args.log_dir, f"results_{encoder_arch}.json")
     if os.path.exists(fname):
