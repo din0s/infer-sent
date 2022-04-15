@@ -1,11 +1,31 @@
 #!/bin/bash
 (
   if [ ! -d "./SentEval" ]; then
+      # SentEval has not been detected as a gitmodule
       echo "SentEval toolkit not found, cloning..."
       git clone https://github.com/facebookresearch/SentEval.git
+  elif [ ! -d "./SentEval/data" ]; then
+      # SentEval has been detected as a gitmodule BUT not initialized
+      echo "SentEval submodule not initialized, pulling..."
+      git submodule update --init --recursive
+  fi
 
-      cd SentEval
-      python setup.py install
+  type module &> /dev/null && LISA=1
+  if [ "$LISA" ]; then
+      module purge
+      module load 2021
+      module load Anaconda3/2021.05
+  else
+      source "$(conda info --base)/etc/profile.d/conda.sh"
+  fi
+
+  conda activate atcs
+  python -c 'import senteval' &> /dev/null || NO_SE=1
+  if [ "$NO_SE" ]; then
+      echo "SentEval module not found, setting up..."
+      cd SentEval && python setup.py install
+  else
+      echo "SentEval module successfully loaded."
   fi
 )
 (
