@@ -1,1 +1,1 @@
-from lr_stopping import LRStopping
+from .lr_stopping import LRStopping
