@@ -49,7 +49,10 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
     logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 
     se = senteval.engine.SE(se_params, batcher)
-    tasks = ["MR", "CR", "SUBJ", "MPQA", "SST2", "TREC", "MRPC", "SICKRelatedness", "SICKEntailment", "STS14"]
+    if args.task:
+        tasks = [args.task]
+    else:
+        tasks = ["MR", "CR", "SUBJ", "MPQA", "SST2", "TREC", "MRPC", "SICKRelatedness", "SICKEntailment", "STS14"]
     results = se.eval(tasks)
 
     fname = os.path.join(args.log_dir, f"results_{encoder_arch}.json")
@@ -109,6 +112,15 @@ if __name__ == "__main__":
 
     parser.add_argument("--no_gpu", action='store_true',
                         help="Whether to NOT use a GPU accelerator for training.")
+
+    parser.add_argument("--task", type=str,
+                        choices=['CR', 'MR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC', 'SNLI',
+                                 'SICKEntailment', 'SICKRelatedness', 'STSBenchmark', 'ImageCaptionRetrieval',
+                                 'STS12', 'STS13', 'STS14', 'STS15', 'STS16',
+                                 'Length', 'WordContent', 'Depth', 'TopConstituents','BigramShift', 'Tense',
+                                 'SubjNumber', 'ObjNumber', 'OddManOut', 'CoordinationInversion'],
+                        help="The specific SentEval task to evaluate for. " +
+                             "If not defined, the model will be evaluated on the tasks of the Conneau et al. paper.")
 
     # Model arguments
     parser.add_argument("--batch_size", type=int, default=64,
