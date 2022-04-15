@@ -10,6 +10,7 @@ from typing import List
 
 import json
 import logging
+import numpy as np
 import os
 import senteval
 import torch
@@ -23,7 +24,7 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
     def seq_to_ids(seq: List[str]) -> torch.IntTensor:
         return torch.IntTensor([snli.glove.get_id(t) for t in seq])
 
-    def batcher(params: dict, batch: List[List[str]]) -> torch.Tensor:
+    def batcher(params: dict, batch: List[List[str]]) -> np.ndarray:
         batch_lens = torch.LongTensor([len(s) for s in batch])
         batch_ids = [seq_to_ids(s) for s in batch]
 
@@ -31,7 +32,7 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
         x = pad_sequence(batch_ids, batch_first=True)
         x = m.embed(x)
         x = m.encoder(x, batch_lens)
-        return x
+        return x.detach().numpy()
 
     se_params = {
         "model": model,
