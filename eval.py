@@ -24,6 +24,7 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
     def seq_to_ids(seq: List[str]) -> torch.IntTensor:
         return torch.IntTensor([snli.glove.get_id(t) for t in seq])
 
+    @torch.no_grad()
     def batcher(params: dict, batch: List[List[str]]) -> np.ndarray:
         batch = [s if s != [] else ['.'] for s in batch]
         batch_lens = torch.LongTensor([len(s) for s in batch])
