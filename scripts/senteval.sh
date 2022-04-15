@@ -15,11 +15,11 @@
       module purge
       module load 2021
       module load Anaconda3/2021.05
-  else
-      source "$(conda info --base)/etc/profile.d/conda.sh"
   fi
 
+  source "$(conda info --base)/etc/profile.d/conda.sh"
   conda activate atcs
+
   python -c 'import senteval' &> /dev/null || NO_SE=1
   if [ "$NO_SE" ]; then
       echo "SentEval module not found, setting up..."
