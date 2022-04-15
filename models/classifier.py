@@ -34,7 +34,7 @@ class Classifier(LightningModule):
             lr: float,
             **kwargs):
         super().__init__()
-        self.save_hyperparameters(ignore=["encoder"])
+        self.save_hyperparameters(ignore=["embeddings", "encoder"])
 
         self.embed = Embedding.from_pretrained(embeddings, freeze=True)
         self.encoder = encoder
