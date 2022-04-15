@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, Namespace
-from classifier import Classifier
 from copy import deepcopy
 from encoders import BaselineEncoder, BiLSTMEncoder, LSTMEncoder, MaxBiLSTMEncoder
+from models import Classifier
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from sklearn.exceptions import ConvergenceWarning
