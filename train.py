@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, Namespace
+from callbacks import LRStopping
 from classifier import Classifier
 from encoders import BaselineEncoder, BiLSTMEncoder, LSTMEncoder, MaxBiLSTMEncoder
-from lr_stopping import LRStopping
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
