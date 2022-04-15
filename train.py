@@ -62,7 +62,13 @@ def train(args: Namespace):
         }
         model = Classifier(**model_args)
 
-    trainer.fit(model, snli)
+    trainer_args = {}
+    if args.checkpoint:
+        # THIS DOES NOT WORK IN PL 1.6.0 WHEN USING EARLY STOPPING OR AN LR SCHEDULER THAT MONITORS VAL LOSS/ACC
+        # trainer_args['ckpt_path'] = args.checkpoint
+        pass
+
+    trainer.fit(model, snli, **trainer_args)
 
 
 if __name__ == "__main__":
