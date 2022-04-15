@@ -3,6 +3,7 @@ from classifier import Classifier
 from encoders import BaselineEncoder, BiLSTMEncoder, LSTMEncoder, MaxBiLSTMEncoder
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
+from sklearn.exceptions import ConvergenceWarning
 from snli import SNLIDataModule
 from torch.nn.utils.rnn import pad_sequence
 from typing import List
@@ -12,9 +13,11 @@ import logging
 import os
 import senteval
 import torch
+import warnings
 
 
 def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, args: Namespace):
+    warnings.filterwarnings("ignore", category=ConvergenceWarning)
     # def prepare(params: dict, samples: List[str]):
 
     def seq_to_ids(seq: List[str]) -> torch.IntTensor:
@@ -34,7 +37,7 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
         "model": model,
         "task_path": args.task_dir,
         "seed": args.seed,
-        "usepytorch": True,
+        "usepytorch": False,
         "kfold": 5,
         "classifier": {
             "nhid": 0,
@@ -46,7 +49,7 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
     }
 
     # optional: setup logger
-    logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s | %(message)s', level=logging.DEBUG)
 
     se = senteval.engine.SE(se_params, batcher)
     if args.task:
@@ -56,8 +59,13 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
     results = se.eval(tasks)
 
     fname = os.path.join(args.log_dir, f"results_{encoder_arch}.json")
-    with open(fname, "w") as f:
-        json.dump(results, f)
+    if os.path.exists(fname):
+        with open(fname, 'r') as f:
+            curr = json.load(f)
+            results = {**curr, **results}
+
+    with open(fname, 'w') as f:
+        json.dump(results, f, indent=4, sort_keys=True)
 
 
 def test(args: Namespace):
