@@ -43,16 +43,7 @@ def train(args: Namespace):
 
     if args.checkpoint:
         print(f"Loading from checkpoint: {args.checkpoint}")
-        try:
-            model = Classifier.load_from_checkpoint(args.checkpoint, **model_args)
-        except TypeError:
-            # old checkpoints missing repr_dim and n_classes in saved hparams
-            model_args = {
-                **model_args,
-                "repr_dim": repr_dim,
-                "n_classes": snli.num_classes
-            }
-            model = Classifier.load_from_checkpoint(args.checkpoint, **model_args)
+        model = Classifier.load_from_checkpoint(args.checkpoint, **model_args)
     else:
         model_args = {
             **model_args,

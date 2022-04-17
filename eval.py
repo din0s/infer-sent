@@ -20,7 +20,6 @@ import warnings
 
 def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, args: Namespace):
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
-    # def prepare(params: dict, samples: List[str]):
 
     def seq_to_ids(seq: List[str]) -> torch.IntTensor:
         return torch.IntTensor([snli.glove.get_id(t) for t in seq])

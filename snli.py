@@ -79,15 +79,6 @@ class SNLIDataModule(pl.LightningDataModule):
             print("Converting tokens to ids")
             dataset = dataset.map(to_ids, batched=True)
 
-            # def concat(sample: Dict[str, List]) -> Dict[str, List]:
-            #     ids1 = sample['premise']
-            #     ids2 = sample['hypothesis']
-            #     sentence = ids1 + [-1] + ids2  # -1 acts as the chunking id
-            #     return {"sentences": sentence, "labels": sample["label"]}
-            #
-            # print("Concatenating sentences")
-            # dataset = dataset.map(concat, remove_columns=["label", "premise", "hypothesis"])
-
             print("Saving aligned dataset to disk")
             dataset.save_to_disk(self.aligned_dir)
 
