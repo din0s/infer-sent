@@ -135,7 +135,7 @@ if __name__ == "__main__":
                         choices=['CR', 'MR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC', 'SNLI',
                                  'SICKEntailment', 'SICKRelatedness', 'STSBenchmark', 'ImageCaptionRetrieval',
                                  'STS12', 'STS13', 'STS14', 'STS15', 'STS16',
-                                 'Length', 'WordContent', 'Depth', 'TopConstituents','BigramShift', 'Tense',
+                                 'Length', 'WordContent', 'Depth', 'TopConstituents', 'BigramShift', 'Tense',
                                  'SubjNumber', 'ObjNumber', 'OddManOut', 'CoordinationInversion'],
                         help="The specific SentEval task to evaluate for. " +
                              "If not defined, the model will be evaluated on the tasks of the Conneau et al. paper.")
