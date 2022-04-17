@@ -13,7 +13,7 @@ import torchmetrics.functional as TF
 
 class Classifier(LightningModule):
     @staticmethod
-    def add_model_specific_args(parent_parser: ArgumentParser):
+    def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
         parser = parent_parser.add_argument_group("Classifier")
 
         parser.add_argument("--classifier_hidden_dim", type=int, default=512,
