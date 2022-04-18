@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from pytorch_lightning import LightningModule
 from torch import Tensor
-from torch.nn import Embedding, Linear, Module, Sequential
+from torch.nn import Embedding, Linear, Module, Parameter, Sequential
 from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau, StepLR
 from typing import List, Tuple
@@ -36,7 +36,9 @@ class Classifier(LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["embeddings", "encoder"])
 
-        self.embed = Embedding.from_pretrained(embeddings, freeze=True)
+        embed_num, embed_dim = embeddings.data.shape
+        self.embed = Embedding(embed_num, embed_dim)
+        self.embed.weight.requires_grad = False
         self.encoder = encoder
 
         self.classifier = Sequential(
@@ -44,6 +46,10 @@ class Classifier(LightningModule):
             Linear(self.hparams.classifier_hidden_dim, self.hparams.classifier_hidden_dim),
             Linear(self.hparams.classifier_hidden_dim, n_classes)
         )
+
+    @torch.no_grad()
+    def load_embeddings(self, embeddings: Tensor):
+        self.embed.weight = Parameter(embeddings)
 
     def forward(self, p: Tensor, h: Tensor, p_len: Tensor, h_len: Tensor) -> Tensor:
         # Embed
@@ -103,3 +109,14 @@ class Classifier(LightningModule):
         }
 
         return [optimizer], [scheduler1_cfg, scheduler2_cfg]
+
+    def on_load_checkpoint(self, checkpoint: dict):
+        # old models still have embedding weights and not just their shape
+        # TODO: manually remove the embeddings before turning in the assignment
+        if 'embed.weight' not in checkpoint['state_dict']:
+            checkpoint['state_dict']['embed.weight'] = torch.empty(checkpoint['embed_shape'])
+
+    def on_save_checkpoint(self, checkpoint: dict):
+        weights = checkpoint['state_dict']['embed.weight']
+        checkpoint['embed_shape'] = weights.shape
+        del weights

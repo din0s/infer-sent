@@ -53,6 +53,8 @@ def train(args: Namespace):
         }
         model = Classifier(**model_args)
 
+    model.load_embeddings(snli.glove.vectors)
+
     trainer_args = {}
     if args.checkpoint:
         # THIS DOES NOT WORK IN PL 1.6.0 WHEN USING EARLY STOPPING OR AN LR SCHEDULER THAT MONITORS VAL LOSS/ACC
