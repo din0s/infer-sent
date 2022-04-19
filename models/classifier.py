@@ -111,12 +111,8 @@ class Classifier(LightningModule):
         return [optimizer], [scheduler1_cfg, scheduler2_cfg]
 
     def on_load_checkpoint(self, checkpoint: dict):
-        # old models still have embedding weights and not just their shape
-        # TODO: manually remove the embeddings before turning in the assignment
-        if 'embed.weight' not in checkpoint['state_dict']:
-            checkpoint['state_dict']['embed.weight'] = torch.empty(checkpoint['embed_shape'])
+        embed_shape = (self.embed.num_embeddings, self.embed.embedding_dim)
+        checkpoint['state_dict']['embed.weight'] = torch.empty(embed_shape)
 
     def on_save_checkpoint(self, checkpoint: dict):
-        weights = checkpoint['state_dict']['embed.weight']
-        checkpoint['embed_shape'] = weights.shape
-        del weights
+        del checkpoint['state_dict']['embed.weight']
