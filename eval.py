@@ -22,7 +22,7 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
     def seq_to_ids(seq: List[str]) -> torch.IntTensor:
-        return torch.IntTensor([snli.glove.get_id(t) for t in seq])
+        return torch.IntTensor([snli.glove.get_id(t.lower()) for t in seq])
 
     @torch.no_grad()
     def batcher(params: dict, batch: List[List[str]]) -> np.ndarray:
