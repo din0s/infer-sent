@@ -2,7 +2,6 @@
 
 DIR="./data/glove"
 ZIP="$DIR/glove.840B.300d.zip"
-URL="http://downloads.cs.stanford.edu/nlp/data/glove.840B.300d.zip"
 
 if [ ! -f "$ZIP" ]; then
     mkdir -p "$DIR"
