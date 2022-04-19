@@ -103,6 +103,7 @@ def test(args: Namespace):
 
     model_args = {"embeddings": snli.glove.vectors, "encoder": encoder}
     model = Classifier.load_from_checkpoint(args.checkpoint, **model_args)
+    model.load_embeddings(snli.glove.vectors)
 
     if args.senteval:
         handle_senteval(model, encoder_arch, snli, args)
