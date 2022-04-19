@@ -26,18 +26,21 @@ def handle_senteval(model: Classifier, encoder_arch: str, snli: SNLIDataModule, 
 
     @torch.no_grad()
     def batcher(params: dict, batch: List[List[str]]) -> np.ndarray:
+        d = params['device']
         batch = [s if s != [] else ['.'] for s in batch]
-        batch_lens = torch.LongTensor([len(s) for s in batch])
+        batch_lens = torch.LongTensor([len(s) for s in batch]).to(d)
         batch_ids = [seq_to_ids(s) for s in batch]
 
         m = params['model']
-        x = pad_sequence(batch_ids, batch_first=True)
+        x = pad_sequence(batch_ids, batch_first=True).to(d)
         x = m.embed(x)
         x = m.encoder(x, batch_lens)
-        return x.detach().numpy()
+        return x.cpu().detach().numpy()
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     se_params = {
-        "model": model,
+        "device": device,
+        "model": model.to(device),
         "task_path": args.task_dir,
         "seed": args.seed,
         "usepytorch": False,
