@@ -23,11 +23,14 @@ class BaseLSTMEncoder(Module):
 
         if self.pooling:
             # BiLSTM with max pooling over each dimension of the hidden states
-            # https://github.com/ihsgnef/InferSent-1/blob/master/models.py#L74
             out, _ = pad_packed_sequence(out, batch_first=True)
-            out = [o[:l].data for o, l in zip(out, lens)]
-            out = [torch.max(o, dim=0)[0] for o in out]
-            return torch.vstack(out)
+
+            # substitute zeroes (e.g. from padding) with -inf
+            with torch.no_grad():
+                out[out == 0] = -1e9
+
+            out, _ = torch.max(out, dim=1)
+            return out
 
         # BiLSTM, stack the two final hidden states
         return torch.hstack([*h_t])
